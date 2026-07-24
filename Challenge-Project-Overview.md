@@ -18,127 +18,119 @@
 
 ---
 
-### 🔍 SME Feedback from the Break Through Tech Evaluation Team
+## 📋 BTT Internal Evaluation Notes
+*(This section is for BTT staff and CAs only — remove before sharing with students)*
 
-*Challenge Advisor: Please address the following feedback by editing this page. Your AI Studio Coach can help make project adjustments as needed, too. In addition to the grey section above, this section should be removed before sharing the repo with your student team.*
+### Technical Vetting
+| Check | Status | Notes |
+| :--- | :--- | :--- |
+| Python Compatibility | 🟡 | The project explicitly states MATLAB as the tech stack for the model, which is not compatible with the Python-centric BTT ecosystem. While signal processing and deep learning concepts can be implemented in Python, the deliverable artifact is tied to MATLAB. |
+| Data Readiness | 🟡 | The Microsoft DNS Challenge dataset is generally well-curated. However, audio data processing and feature extraction (e.g., spectrograms, MFCCs) can be complex and time-consuming, potentially consuming significant student effort. |
+| Resource Check | 🔴 | The project requires specialized compute resources (GPU/TPU) and explicitly mentions MATLAB, which is proprietary software. This violates the free-tier Colab and no proprietary software constraints. |
+
+### Internal Scores
+- **Student Fit Score:** 5/10
+- **Technical Depth Score:** 8/10
+- **Overall Recommendation:** REVISE
+
+### Advisor Feedback Draft
+Thank you for submitting the Speech Background Noise Suppression project proposal. The application of deep learning for audio enhancement is a technically sophisticated area, and the use of objective metrics like PESQ and STOI demonstrates a commitment to rigorous evaluation. However, to align with BTT's core principles and ensure a high-signal learning experience for fellows, we need to address a few key areas.
+
+Firstly, the reliance on MATLAB as the primary tech stack for the model deliverable poses a significant challenge, as BTT's curriculum is entirely Python-based. A potential adjustment would be to scope the project such that the *research* and *prototyping* utilize Python libraries (e.g., TensorFlow/Keras, PyTorch, Librosa) for all modeling and evaluation, with the final MATLAB integration being a separate, potentially out-of-scope, task for the partner.
+
+Secondly, the explicit requirement for GPU/TPU resources and the mention of proprietary software (MATLAB) currently fall outside our free-tier Google Colab and open-source constraints. We recommend pivoting to techniques that are feasible within these limitations. For example, exploring smaller, more efficient model architectures or focusing on sophisticated signal processing techniques that can be implemented and trained within standard Colab environments.
+
+Thirdly, while the Microsoft DNS dataset is valuable, the complexity of audio preprocessing and feature engineering for speech enhancement can be substantial. To ensure a 'Goldilocks' difficulty, we might need to narrow the scope of noise types or focus on a specific, well-defined audio processing pipeline rather than a broad 'suppresses background noise' goal.
+
+We are eager to explore how this project can be adapted to provide a rich, Python-centric deep learning experience for our fellows. Please let us know your thoughts on these adjustments, and we can schedule a follow-up to discuss the path forward.
 
 ---
 
-# [Project Title]
+# Speech Background Noise Suppression with Deep Learning
 
-**Company / Org:** [Company / Org Name]  
-**Challenge Advisor:** [Name, Title, Email]  
-**Program:** Break Through Tech AI Studio - Fall 2026
+**Company / Org:** MathWorks  
+**Challenge Advisor:** Neha Sardesai, nsardesa@mathworks.com  
+**Program:** Break Through Tech AI Studio - Fall 2026  
 
 ---
 
-## 🏢 About [Company / Org Name]
-
-[2-3 sentences about your company: what you do, your industry, etc. You may also choose to specify your specific department or team.]
+## 🏢 About MathWorks
+MathWorks is the leading developer of mathematical computing software for engineers and scientists worldwide. Their flagship products, MATLAB and Simulink, empower innovators to accelerate the pace of engineering and scientific discovery across industries such as automotive, aerospace, and communications. The team objectives for this challenge focus on enhancing speech processing capabilities to improve real-world accessibility and communication clarity.
 
 ---
 
 ## 🎯 The Challenge
-
 ### Project Summary
-[In 2-3 sentences, describe what you're asking the team to do. Be specific about the type of data, ML techniques, and potential impact.]
-
-> **Example:** "In this project, your team will use customer transaction data and classification algorithms to build a model that predicts which users are likely to churn. This will help our retention team prioritize outreach."
+This project leverages the Microsoft DNS Challenge dataset to build and validate a deep learning model capable of real-time background noise suppression. By integrating neural architectures like CNNs or RNNs with traditional signal processing techniques, the team will develop a system that significantly improves speech quality. The final outcome aims to deliver a robust solution that assists in creating clearer audio environments for individuals with hearing impairments and professionals in high-noise workspaces.
 
 ### Success Criteria
-[What does success look like? Describe evaluation metrics (accuracy, F1 score, etc.) or qualitative outcomes that would make this project valuable to your company.]
+Objective: PESQ (Perceptual Evaluation of Speech Quality) and STOI (Short-Time Objective Intelligibility). Subjective: Informal listening tests compared against the noisy input.
 
 ### Project Milestones
-
-Use these milestones to guide your work. Your team will create a **GitHub Projects board** to track tasks within each milestone.
-
+Use these milestones to guide your work. Your team will create a GitHub Projects board to track tasks within each milestone.
 | Month | Milestone | Key Activities |
 |-------|-----------|----------------|
-| **September** | [e.g., Data Understanding] | [e.g., Explore dataset, handle missing values, document findings] |
-| **October** | [e.g., Model Development] | [e.g., Train baseline model, experiment with approaches, iterate] |
-| **November** | [e.g., Evaluation & Presentation] | [e.g., Finalize model, prepare presentation, document results] |
+| **September** | Data Exploration & Preprocessing | Load audio datasets, establish a pipeline for waveform visualization, and identify noise/speech separation protocols. |
+| **October** | Feature Engineering & Baseline Modeling | Implement audio feature extraction (spectrograms/MFCCs) and train an initial baseline CNN or RNN architecture. |
+| **November** | Model Optimization & Evaluation | Execute iterative hyperparameter tuning, conduct validation runs using PESQ/STOI, and refine model architecture. |
+| **December** | Insights, Deliverables & Presentation | Finalize model documentation, package code, and prepare the end-of-program presentation and demo. |
 
 > **Note for the team:** Please create a GitHub Projects board in this repository to break these milestones into weekly tasks. Go to the **Projects** tab → **New project** → Choose **Board** → Add columns for each month.
 
 ---
 
 ## 📊 Dataset
-
-**Name and Source:** [Dataset name and where it's from]  
-**Format:** [e.g., CSV, JSON, images]  
-**Size:** [Approximate size in MB/GB]  
-**Location:** [Link to dataset or instructions for accessing it]
+**Name and Source:** Microsoft DNS Challenge (Deep Noise Suppression)  
+**Format:** Raw Audio (.wav) and Metadata  
+**Size:** over 10gb  
+**Location:** Internal partner link provided via project kickoff documentation.  
 
 ### Key Details
-- [Brief description of what's in the data]
-- [Any known limitations or preprocessing needed]
-- [Link to data dictionary or documentation, if available]
+- Microsoft DNS Challenge dataset - labeled speech and background noise audio data.
+- The data requires careful handling of sample rates, windowing for Fourier Transforms, and normalization to ensure consistency during the training of the neural network.
 
 ---
 
 ## 🛠️ Suggested Approach
-
-**ML Problem Type:** [e.g., Classification, Regression, NLP, Computer Vision, LLM/RAG]
-
+**ML Problem Type:** Regression / Signal Processing  
 **Recommended Libraries:**
-- [e.g., pandas, scikit-learn, TensorFlow, Hugging Face]
-
-**Evaluation Metrics:**
-- [e.g., Accuracy, Precision/Recall, RMSE, BLEU score]
+- Deep Learning (CNNs, RNNs)
+- Signal Processing Toolkits
+- MATLAB
+**Evaluation Metrics:** PESQ (Perceptual Evaluation of Speech Quality), STOI (Short-Time Objective Intelligibility)
 
 ---
 
 ## 📚 Resources to Get Started
-
 The following resources will help your team understand the problem space and potential technical approaches for this project:
-
 **Background Reading:**
-- [e.g., Link to an article or blog post about the problem domain]
-- [e.g., Link to an industry report or case study]
-
+- Documentation on the Microsoft DNS Challenge benchmarks and speech enhancement architectures.
 **Technical Tutorials:**
-- [e.g., Link to a free tutorial on the ML technique(s) involved]
-- [e.g., Link to documentation for a key library or tool]
-
+- MathWorks documentation on Deep Learning for audio and signal processing.
 **Code Examples:**
-- [e.g., Link to a relevant GitHub repo]
-- [e.g., Link to a sample implementation or starter code]
-
-**Other:**
-- [Links to any additional resources — e.g., papers, videos, podcasts, etc.]
-
-*Feel free to explore beyond these, and share anything interesting you find with me!*
+- Sample starter notebooks for audio preprocessing and basic CNN implementation.
 
 ---
 
-## 🤝 How We'll Work Together (v2)
-
-**Official check-ins:** During our biweekly 45-minute AI Studio Lab Section meeting block (2nd and 4th week of every month)
-
- **Other ways to reach out to me with questions:** 
-* [e.g., Your team's channel within Break Through Tech’s Discord space]
-* [e.g., Email; please copy your teammates and AI Studio Coach]
-* [e.g., Request a team check-in on Zoom]
-* [Note: I will aim to respond within 48 hours. Please reach out to your AI Studio Coach with urgent questions.]
-
-> 💡 **Challenge Advisor: Please update the above based on your availability and preference. If you are not able to answer questions or meet with fellows outside of the biweekly Lab Section check-ins, simply write in "N/A (only available during the official check-in times)"**
-
-**Recommended free coding / collaboration tools**
-* […]
-* […]
+## 🤝 How We'll Work Together
+**Check-ins:** During our biweekly 60-min AI Studio Lab Section meeting block (2nd and 4th week of every month)  
+**Communication:** Email and scheduled platform-specific syncs.  
+**Response time:** 24–48 business hours.  
+**Recommended Tools:**
+- **Coding:** Google Colab Free Tier  
+- **Collaboration:** GitHub, Notion  
+- **Virtual Meetings:** Zoom, Google Meet  
 
 ---
 
 ## 🚀 Getting Started
+1. **Review this overview document** and note any questions for our first meeting.
+2. **Begin reviewing the dataset** using the link provided in the Dataset section.
+3. **Read the GitHub Projects documentation** [here](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects).
 
-1. **Review this overview document** and note any questions for our first meeting
-2. **Begin reviewing the dataset** using the link above
-3. **Read the GitHub Projects documentation** [here](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects)
-
-I’m excited to work with you!
+I'm excited to work with you!
 
 ---
 
 ## ❓ Questions?
-
-Please bring any questions to our first meeting during the week of August 24th (Break Through Tech’s Bridge to Studio - Session C). 
+Please bring any questions to our first meeting during the week of August 24th (Break Through Tech's Bridge to Studio - Session B).
