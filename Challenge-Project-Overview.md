@@ -49,7 +49,8 @@ We are eager to explore how this project can be adapted to provide a rich, Pytho
 # Speech Background Noise Suppression with Deep Learning
 
 **Company / Org:** MathWorks  
-**Challenge Advisor:** Neha Sardesai, nsardesa@mathworks.com  
+**Challenge Advisor:** Neha Sardesai, nsardesa@mathworks.com 
+**AI Studio Coach:** Bhavya Gopal, bhavya.gopal@breakthroughtech.org   
 **Program:** Break Through Tech AI Studio - Fall 2026  
 
 ---
