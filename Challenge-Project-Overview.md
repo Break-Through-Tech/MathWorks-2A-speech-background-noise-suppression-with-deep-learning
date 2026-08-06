@@ -69,12 +69,17 @@ Objective: PESQ (Perceptual Evaluation of Speech Quality) and STOI (Short-Time O
 
 ### Project Milestones
 Use these milestones to guide your work. Your team will create a GitHub Projects board to track tasks within each milestone.
+
 | Month | Milestone | Key Activities |
-|-------|-----------|----------------|
-| **September** | Data Exploration & Preprocessing | Load audio datasets, establish a pipeline for waveform visualization, and identify noise/speech separation protocols. |
-| **October** | Feature Engineering & Baseline Modeling | Implement audio feature extraction (spectrograms/MFCCs) and train an initial baseline CNN or RNN architecture. |
-| **November** | Model Optimization & Evaluation | Execute iterative hyperparameter tuning, conduct validation runs using PESQ/STOI, and refine model architecture. |
-| **December** | Insights, Deliverables & Presentation | Finalize model documentation, package code, and prepare the end-of-program presentation and demo. |
+| :--- | :--- | :--- |
+| September | Audio Preprocessing & Baseline Signal Processing | • Ingest speech and background noise datasets (e.g., Microsoft DNS Challenge dataset).<br>• Perform audio signal preprocessing, Short-Time Fourier Transform (STFT) extraction, and spectrogram visualizations.<br>• Implement classical baseline noise suppression algorithms (e.g., spectral subtraction or Wiener filtering).<br>• Establish baseline audio quality metrics: Signal-to-Noise Ratio (SNR), Perceptual Evaluation of Speech Quality (PESQ), and Short-Time Objective Intelligibility (STOI). |
+| October | Deep Learning Modeling & Denoising Architecture | • Construct deep neural network architectures for speech enhancement (e.g., Conv-TasNet, Deep Complex U-Net, or CNN-LSTM models).<br>• Train models on paired noisy and clean speech audio samples using spectral loss functions.<br>• Conduct hyperparameter tuning and cross-validation across varying signal-to-noise ratios and background noise types. |
+| November / December | Model Evaluation, Audio UI Demo & Deliverables | • Evaluate denoising quality against baseline filters using PESQ, STOI, and Scale-Invariant Signal-to-Distortion Ratio (SI-SDR).<br>• Develop an interactive Streamlit application enabling users to upload noisy audio files, listen to cleaned speech outputs, and compare input/output spectrograms.<br>• Finalize clean, reproducible GitHub repository, project documentation, and stakeholder presentation deck. |
+
+### Stretch Goals
+* **Live Microphone Streaming:** Implement continuous audio buffer processing to clean background noise from live microphone input in real time.
+* **Model Export & Edge Optimization:** Convert and quantize the speech enhancement model to ONNX or TFLite format for low-latency, CPU-efficient execution.
+* **Non-Stationary Noise Robustness:** Stress-test and fine-tune model performance on complex non-stationary acoustic environments (e.g., wind noise, transient impacts, or background babble chatter).
 
 > **Note for the team:** Please create a GitHub Projects board in this repository to break these milestones into weekly tasks. Go to the **Projects** tab → **New project** → Choose **Board** → Add columns for each month.
 
