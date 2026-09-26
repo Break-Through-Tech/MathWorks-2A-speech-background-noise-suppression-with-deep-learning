@@ -1,1 +1,7 @@
-
+numpy
+scipy
+soundfile
+pandas
+tqdm
+matplotlib
+jupyter
