@@ -52,7 +52,7 @@ later experiment is compared against.
 | Mask / IRM | A 0–1 value per frame and bin saying how much of the sound to keep. IRM is the "perfect" mask computed from the clean audio. |
 | GRU | A type of recurrent neural network layer that remembers what it saw in earlier frames. |
 | Phase | The timing part of the STFT. We don't predict it; we reuse it from the noisy audio. |
-| PESQ | Perceptual speech quality score, about −0.5 to 4.5. Higher is better. |
+| PESQ | Perceptual speech quality score; wideband PESQ ranges about 1.0 to 4.6. Higher is better. |
 | STOI | Speech intelligibility score, 0 to 1. Higher is better. |
 | SNR | Signal-to-noise ratio in dB. Lower (e.g. −5 dB) means louder noise. |
 
@@ -62,7 +62,7 @@ later experiment is compared against.
 
 Produced by `scripts/build_features.py` (see `notebooks/01_input_representation.ipynb`).
 Rebuild with `python scripts/build_features.py`; outputs go to
-`data/processed/` (not tracked in git).
+`data/processed/features/` (git-ignored).
 
 | Split | Mixtures | 2 s segments | Speaker(s) |
 |---|---|---|---|
@@ -71,8 +71,9 @@ Rebuild with `python scripts/build_features.py`; outputs go to
 | test | 60 | 172 | 04408 |
 
 - 646 mixtures total; 3 excluded (silent noise files).
-- Noise types: door (283), typing (268), squeakyChair (80), copy-machine (15).
-- SNRs: −5, 0, 5, 10, 15, 20 dB (~107 mixtures each).
+- Noise types (after exclusions): door (281), typing (267), squeakyChair (80),
+  copy-machine (15).
+- SNRs: −5, 0, 5, 10, 15, 20 dB (104–109 mixtures each).
 - Split is by speaker so no voice appears in more than one split.
 
 ### Signal settings (`scripts/features.py`)
@@ -113,8 +114,9 @@ mask  [B, 126, 257]  → transpose → [B, 257, 126], values in [0, 1]
 ### From mask to audio (inference)
 
 ```
+_, noisy_phase = magnitude_phase(noisy_wav)       # phase is not stored in the .npz
 enhanced_mag = mask × noisy_mag
-enhanced_wav = istft(enhanced_mag, noisy_phase)   # features.reconstruct
+enhanced_wav = reconstruct(enhanced_mag, noisy_phase, length=32000)
 ```
 
 The model never has to predict phase; it reuses the noisy phase.
@@ -126,7 +128,7 @@ The model never has to predict phase; it reuses the noisy phase.
 **Ideal ratio mask (IRM)** (`features.ideal_ratio_mask`):
 
 ```
-IRM = clip(clean_mag / (noisy_mag + eps), 0, 1)
+IRM = clip(clean_mag / (noisy_mag + 1e-8), 0, 1)
 ```
 
 Why a mask instead of predicting the clean spectrogram directly:
@@ -134,8 +136,10 @@ Why a mask instead of predicting the clean spectrogram directly:
 - Bounded output in [0, 1] → stable training with a sigmoid.
 - The model only has to decide *how much to keep* at each time-frequency
   point, which is easier to learn from a small dataset.
-- Standard, well-documented approach for lightweight speech enhancement
-  (e.g., the MathWorks "Denoise Speech Using Deep Learning Networks" example).
+- Standard, well-documented approach for lightweight speech enhancement.
+  (The MathWorks "Denoise Speech Using Deep Learning Networks" example
+  predicts the clean magnitude directly instead; that is a reasonable
+  alternative to compare against.)
 
 Known limitation: reusing the noisy phase caps quality, especially at
 low SNR (−5, 0 dB). Complex masks are a possible later improvement.
@@ -196,7 +200,7 @@ convolutional encoder-decoder (CRN-lite) with a similar parameter budget.
 |---|---|---|
 | Optimizer | Adam | β = (0.9, 0.999) |
 | Learning rate | 1e-3 | halve on val-loss plateau (patience 3) |
-| Batch size | 32 | ~40 steps per epoch |
+| Batch size | 32 | 41 steps per epoch (1,292 segments) |
 | Max epochs | 50 | early stopping, patience 8 on val loss |
 | Dropout | 0.2 | between GRU layers |
 | Weight decay | 0 | add 1e-5 if overfitting |
@@ -271,8 +275,10 @@ scratch.
 **Why 2-second segments?**
 They give the GRU enough context to recognize noises like door slams and
 typing, while keeping batches small enough to train on a CPU. Longer
-clips are cut into several segments; shorter ones are zero-padded, and
-`frame_mask` tells the loss to ignore the padding.
+clips are cut into several back-to-back segments. A clip shorter than 2 s,
+or the leftover piece at the end of a clip, is zero-padded, and
+`frame_mask` tells the loss to ignore the padding. A leftover piece
+shorter than 0.5 s is dropped instead (unless it is the whole clip).
 
 **Why is the data split by speaker instead of randomly?**
 If the same voice appears in training and test, the model can "memorize"
@@ -284,7 +290,8 @@ Their noise files were silent, so they aren't really noisy examples (SNR
 above 50 dB). See `scripts/build_features.py`.
 
 **Where are the normalization stats computed?**
-On the training split only (`norm_stats.npz`). Using val/test data there
+On the training split only, using real (non-padded) frames
+(`data/processed/features/norm_stats.npz`). Using val/test data there
 would leak information about those splits into training.
 
 **Why a unidirectional GRU and not a bidirectional one?**
@@ -298,7 +305,7 @@ Yes. At ~0.86 M parameters it is small enough for a CPU. Google Colab
 
 **How do I regenerate the data?**
 Run `python scripts/build_features.py`. The outputs in `data/processed/`
-are not tracked in git, so everyone builds them locally.
+are git-ignored, so everyone builds them locally.
 
 **What PESQ / STOI scores should we expect?**
 We don't know yet. Step 1 of the evaluation plan is to measure the noisy
