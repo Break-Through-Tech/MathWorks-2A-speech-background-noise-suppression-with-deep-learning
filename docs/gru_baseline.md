@@ -195,67 +195,140 @@ The sigmoid output constrains the mask to (0, 1). When the mask is 1 at a freque
 
 ## Training
 
-**Run from the repo root:**
+During training, the GRU learns how to turn a **mixed/noisy spectrogram** (speech + background noise) into a mask that keeps speech while suppressing noise.
 
-```bash
-# Full training (saves to models/gru_best.pt)
-python scripts/train_gru.py
+For every training example, we have both the noisy recording and its matching clean recording. However, the GRU itself only receives the **noisy spectrogram**. The clean version acts like an **answer key** that the training code uses to determine how wrong the GRU's prediction was.
 
-# Quick smoke test (2 epochs, 64 samples)
-python scripts/train_gru.py --max-epochs 2 --subset 64 --no-val-metrics
+The overall learning process is:
+
+1. The noisy spectrogram is passed into the GRU.
+2. The GRU predicts an enhancement mask.
+3. The training code compares the prediction against a target derived from the clean/noisy pair.
+4. This difference produces a **loss**, which is a number representing how wrong the model was.
+5. **Backpropagation** works backward through the GRU and calculates how each trainable weight contributed to that error.
+6. The **Adam optimizer** uses those gradients to slightly adjust the GRU's weights in a direction that should reduce the loss.
+7. The process repeats for the next batch.
+
+A **batch** is a group of training examples processed together (32 by default). An **epoch** is one complete pass through the training dataset. Over many batches and epochs, the GRU's weights gradually change so that its predicted masks become closer to the desired masks.
+
+During inference, this learning process stops. There is no clean answer, loss, backpropagation, or optimizer. The trained GRU receives only a new noisy spectrogram and predicts a mask using the weights it learned during training.
+
+### GRU v1 — Magnitude MSE
+
+GRU v1 and v2 use the **same GRU architecture**. What changes is how we tell the model whether its predicted mask was good or bad.
+
+In v1, the GRU was **not directly told what the correct mask should be**. Instead, it predicted a mask, and that mask was multiplied by the noisy magnitude spectrogram to create an enhanced magnitude:
+
+```text
+predicted mask × noisy magnitude = enhanced magnitude
 ```
 
-**Key settings (defaults):**
+The training code then compared this enhanced magnitude with the actual clean magnitude:
 
-| Setting | Value | Note |
-|---|---|---|
-| Loss | Magnitude MSE | `(mask × noisy − clean)²`, averaged over real frames |
-| Optimizer | Adam | lr 1e-3 |
-| LR schedule | ReduceLROnPlateau | ×0.5 when val loss stalls for 3 epochs |
-| Early stopping | patience 8 | stops when val loss has not improved for 8 epochs |
-| Gradient clip | global norm 5.0 | prevents training instability |
-| Batch size | 32 | |
-| Max epochs | 50 | |
-
-**What validation is checking:** validation loss uses the same formula as training loss but on the validation set (speaker 08897). The model's weights are not updated on validation data. The checkpoint is saved whenever the validation loss improves, so the checkpoint always corresponds to the best-seen validation performance, not the final epoch.
-
-**After training completes,** the script computes STOI and PESQ on the full validation set using the best checkpoint, and appends an experiment record to `outputs/experiments/log.csv`.
-
-**Loss functions** are selected via `--loss`:
-
-*GRU v1 — magnitude MSE (default):*
+```text
+enhanced magnitude vs. clean magnitude
+        ↓
+magnitude MSE loss
+        ↓
+backpropagation
+        ↓
+Adam updates GRU weights
 ```
-loss = mean over real frames of (mask × noisy_mag − clean_mag)²
-```
-The model learns indirectly: it discovers which mask produces an enhanced magnitude close to the clean magnitude.
 
-*GRU v2 — IRM target loss (`--loss irm`):*
+So v1 learned the mask **indirectly**: if applying its mask produced something far from the clean spectrogram, the loss was high and the weights were adjusted. If it produced something closer to the clean spectrogram, the loss was lower.
 
-The training code first computes the Ideal Ratio Mask (IRM) for each T-F bin using the clean/noisy training pair. From `scripts/features.py`:
+This worked in the sense that training and validation loss decreased, but evaluation showed that v1 often suppressed too much of recordings that were already relatively clean, especially at higher SNRs. Its overall STOI and PESQ therefore became worse than the original noisy audio.
+
+### GRU v2 — IRM Loss
+
+GRU v2 keeps the **exact same GRU architecture**, but changes what the model is taught to match.
+
+Because we have both the noisy and clean recordings during training, we can calculate an **Ideal Ratio Mask (IRM)**:
+
 ```python
 IRM = clip(clean_mag / (noisy_mag + 1e-8), 0.0, 1.0)
 ```
-The `1e-8` floor prevents division by zero. The clip to `[0, 1]` is essential: if `clean_mag > noisy_mag` at some bin (which can happen due to mixture clipping or phase interactions), the raw ratio would exceed 1 — but the GRU's sigmoid output is bounded to (0, 1), so the target must also be in (0, 1). Clipping makes the target reachable.
 
-Then:
+The IRM acts like a more direct **answer key for the mask itself**. It estimates how much of each time-frequency bin should ideally be kept.
+
+For example, if a bin has:
+
+```text
+noisy magnitude = 10
+clean magnitude = 8
 ```
-loss = mean over real frames of (predicted_mask − IRM)²
+
+then its ideal mask is approximately `0.8`. That tells the training process that the GRU should learn to output something close to `0.8` for that bin.
+
+The important part is that **the GRU is still not given the clean spectrogram or the IRM as input**. It still has to make its prediction using only the noisy spectrogram. The IRM is used afterward to check its answer:
+
+```text
+noisy spectrogram
+       ↓
+      GRU
+       ↓
+predicted mask
+       ↓
+compare with IRM answer key
+       ↓
+IRM loss
+       ↓
+backpropagation
+       ↓
+Adam updates GRU weights
 ```
-The GRU is trained to predict the ratio directly. At high SNR, where speech dominates over noise, the IRM is close to 1 — explicitly telling the model "leave this bin alone." This is why v2 does not over-suppress at high SNR.
+
+This is more direct than v1. V1 essentially said, *"Try a mask, apply it to the noisy spectrogram, and I'll tell you how close the final result was to clean speech."* V2 instead says, *"Here is approximately what the mask itself should have looked like."*
+
+This was especially useful for recordings that were already relatively clean. At high SNR, the noisy and clean magnitudes are similar, so the ideal mask tends to be closer to `1`, which teaches the GRU to leave more of the signal alone instead of unnecessarily suppressing it.
+
+This reduced the over-suppression seen in v1 and produced better validation and test results, so **GRU v2 is the selected baseline model**.
+
+### Validation and Checkpointing
+
+The GRU's weights are updated only using the **training set**. After each epoch, the validation set checks whether the model also performs well on an unseen speaker. Validation calculates loss but does **not** run backpropagation or update the model's weights.
+
+The best validation checkpoint is saved rather than automatically keeping the final epoch. After training, STOI and PESQ are also calculated on the validation set and the experiment is recorded in `outputs/experiments/log.csv`.
+
+The **test set remains separate** and is used for the final evaluation after the model has been selected.
+
+The selected GRU v2 weights are saved as:
+
+```text
+models/gru_v2.pt
+```
+
+### Training Settings
+
+| Setting | Value |
+|---|---|
+| Optimizer | Adam |
+| Learning rate | 0.001 |
+| Batch size | 32 |
+| Maximum epochs | 50 |
+| LR scheduler | ReduceLROnPlateau (factor 0.5, patience 3) |
+| Early stopping | patience 8 |
+| Gradient clipping | max norm 5.0 |
+
+### Running Training
+
+Run from the repository root:
 
 ```bash
-# GRU v1 (default, magnitude MSE)
-python scripts/train_gru.py --checkpoint-name gru_best.pt --exp-name gru_v1
+# Quick smoke test
+python scripts/train_gru.py --max-epochs 2 --subset 64 --no-val-metrics
 
-# GRU v2: IRM target loss (selected model)
-python scripts/train_gru.py --loss irm --checkpoint-name gru_v2.pt --exp-name gru_v2
+# GRU v1 — magnitude MSE
+python scripts/train_gru.py \
+    --checkpoint-name gru_best.pt \
+    --exp-name gru_v1
 
-# GRU v3: log-magnitude loss (not run; v2 sufficient)
-python scripts/train_gru.py --loss log_magnitude --checkpoint-name gru_v3.pt --exp-name gru_v3
+# GRU v2 — IRM loss (selected model)
+python scripts/train_gru.py \
+    --loss irm \
+    --checkpoint-name gru_v2.pt \
+    --exp-name gru_v2
 ```
-
----
-
 ## Evaluation
 
 ```bash
