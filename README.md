@@ -119,3 +119,14 @@ Cite relevant papers, articles, or resources that supported your project.
 ## 🙏 **Acknowledgements** (Optional but encouraged)
 
 Thank your Challenge Advisor, host company representatives, TA, and others who supported your project.
+
+---
+
+## 🤖 Models
+
+| Model | Doc | Status |
+|---|---|---|
+| GRU Baseline v1 | [docs/gru_baseline.md](docs/gru_baseline.md) | Complete — STOI 0.862, PESQ 1.915 (vs noisy 0.890 / 2.077); over-suppresses at high SNR |
+| GRU v2 (IRM loss) | [docs/gru_baseline.md](docs/gru_baseline.md) | **Best GRU** — STOI 0.892, PESQ 2.293 (vs noisy 0.890 / 2.077); checkpoint: `models/gru_v2.pt` |
+
+See [docs/model_comparison.md](docs/model_comparison.md) for the full comparison table across all models.
