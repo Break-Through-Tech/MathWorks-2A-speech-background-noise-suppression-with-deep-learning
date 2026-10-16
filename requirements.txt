@@ -5,3 +5,6 @@ pandas
 tqdm
 matplotlib
 jupyter
+torch
+pesq
+pystoi
