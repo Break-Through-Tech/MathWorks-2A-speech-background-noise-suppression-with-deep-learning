@@ -1,0 +1,6 @@
+timestamp,exp_name,loss_type,hidden_size,dropout,lr,batch_size,max_epochs,best_epoch,best_val_loss,val_noisy_stoi,val_enhanced_stoi,val_stoi_delta,val_noisy_pesq,val_enhanced_pesq,val_pesq_delta,val_n_segments,checkpoint
+2026-10-27 17:28,smoke_test,magnitude,256,0.2,0.001,32,2,2,0.217223,,,,,,,,models/gru_best.pt
+2026-10-27 17:31,baseline_default,magnitude,256,0.2,0.001,32,10,9,0.174096,0.8391,0.7989,-0.0402,1.5799,1.559,-0.0209,184,models/gru_best.pt
+2026-10-27 17:34,high_lr_001,magnitude,256,0.2,0.01,32,10,4,0.188626,0.8391,0.8199,-0.0192,1.5799,1.5562,-0.0236,184,models/gru_best.pt
+2026-10-27 17:35,batch_48,magnitude,256,0.2,0.001,48,10,9,0.181176,0.8391,0.8061,-0.0329,1.5799,1.5969,0.017,184,models/gru_best.pt
+2026-10-27 17:37,irm_loss,irm,256,0.2,0.001,32,10,10,0.126665,0.8391,0.8357,-0.0033,1.5799,1.7053,0.1254,184,models/gru_best.pt

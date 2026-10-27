@@ -6,7 +6,11 @@ models/*.pt
 models/*.pth
 
 # Evaluation outputs and example WAVs
-outputs/
+# Ignore all output files EXCEPT the experiment logs
+outputs/*
+!outputs/experiments/
+outputs/experiments/*
+!outputs/experiments/log.csv
 
 __pycache__/
 .ipynb_checkpoints/
